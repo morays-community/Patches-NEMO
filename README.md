@@ -1,4 +1,4 @@
-# Nemo Patches
+# NEMO Patches
 
 NEMO versions prior to v5.0.x need minimal modifications to create a module dedicated to communication with coupled Python scripts. This repository contains patches of modified NEMO sources for versions: 
 
