@@ -11,20 +11,20 @@ NEMO versions prior to v5.0.x need minimal modifications to create a module dedi
 ## Use a patch 
 - Copy patch sources in the `MY_SRC` directory of a NEMO config
 - Create your Python communication module (more details [here](https://morays-doc.readthedocs.io/en/latest/nemo.api_4.html))
-- Compile NEMO with *key_oasis3* CCP key and OASIS_v5.0 (see this [guide](https://morays-doc.readthedocs.io/en/latest/getting_started.html#base-environment))
+- Compile NEMO with *key_oasis3* CCP key and OASIS_v5.0 (see this [guide](https://morays-doc.readthedocs.io/en/latest/nemo.getting_started.html#morays-environment))
 
 ## Patch Modifications
   * Architecture: OASIS coupling module `cpl_oasis.F90` was initially managed by SBC module
       - OASIS environnement is now totally managed by NEMO main routines in `nemogcm.F90`
       - Coupling module is independent and can be called by any other module to define coupling variables, send and receive them on demand
-      - Now possible to perform exchange of 3D fields (OASIS_V5 needed)
+      - Now possible to perform exchange of 3D fields (OASIS_v5.0 required)
 
   * Properties of coupling variables are stored in meta-arrays `ssnd` and `srcv` in coupling module
       - Dimension added to the array to sort meta-data between calling modules
 
   * New modules:        
-      - `infmod.F90` : module dedicated to inference models management   /!\ Models must be hard-coded for now /!\
-      - `inffld.F90` : memory management for inference models needed fields
+      - `infmod.F90` : module dedicated to inference models communication
+      - `inffld.F90` : memory management for inference models fields
 
 <table>
 <tr>
