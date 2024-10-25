@@ -7,6 +7,7 @@ NEMO versions prior to v5.0.x need minimal modifications to create a module dedi
 - [v4.2.0](https://forge.nemo-ocean.eu/nemo/nemo/-/releases/4.2.0)
 - [v4.2.1](https://forge.nemo-ocean.eu/nemo/nemo/-/releases/4.2.1)
 - [v4.2.2](https://forge.nemo-ocean.eu/nemo/nemo/-/releases/4.2.2)
+- [v5.0.0-unstable](https://forge.nemo-ocean.eu/nemo/nemo/-/tree/branch_5.0?ref_type=heads)
 
 ## Use a patch 
 - Copy patch sources in the `MY_SRC` directory of a NEMO config
