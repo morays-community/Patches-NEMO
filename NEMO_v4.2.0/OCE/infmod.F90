@@ -31,14 +31,13 @@ MODULE infmod
    PUBLIC inferences         ! routine called in stpmlf.F90
    PUBLIC inferences_final   ! routine called in nemogcm.F90
 
-   INTEGER, PARAMETER ::   jps_st = 1    ! sea temperature
-   INTEGER, PARAMETER ::   jps_ss = 2    ! sea salinity
-   INTEGER, PARAMETER ::   jps_mu = 3    ! u mask
-   INTEGER, PARAMETER ::   jps_mv = 4    ! u mask
-   INTEGER, PARAMETER ::   jps_inf = 4   ! total number of sendings for inferences
+   ! Step A: field ID definition
+   INTEGER, PARAMETER ::   jps_1 = 1    ! field to send 1
+   INTEGER, PARAMETER ::   jps_2 = 2    ! field to send 2
+   INTEGER, PARAMETER ::   jps_inf = 2  ! total number of sendings for inferences
 
-   INTEGER, PARAMETER ::   jpr_rho = 1   ! density inferences-computed
-   INTEGER, PARAMETER ::   jpr_inf = 1   ! total number of inference receptions
+   INTEGER, PARAMETER ::   jpr_1 = 1   ! field to receive 1
+   INTEGER, PARAMETER ::   jpr_inf = 1 ! total number of inference receptions
 
    INTEGER, PARAMETER ::   jpinf = MAX(jps_inf,jpr_inf) ! Maximum number of exchanges
 
@@ -107,31 +106,11 @@ CONTAINS
       !
       INTEGER ::   ios   ! Local Integer
       !!
-      NAMELIST/naminf/  ln_inf
       !!----------------------------------------------------------------------
       !
-      ! ================================ !
-      !      Namelist informations       !
-      ! ================================ !
-      !
-      READ  ( numnam_ref, naminf, IOSTAT = ios, ERR = 901)
-901   IF( ios /= 0 )   CALL ctl_nam ( ios , 'naminf in reference namelist' )
-      !
-      READ  ( numnam_cfg, naminf, IOSTAT = ios, ERR = 902 )
-902   IF( ios >  0 )   CALL ctl_nam ( ios , 'naminf in configuration namelist' )
-      IF( lwm ) WRITE ( numond, naminf )
-      !
-      IF( lwp ) THEN                        ! control print
-         WRITE(numout,*)
-         WRITE(numout,*)'inferences_init : Setting inferences models'
-         WRITE(numout,*)'~~~~~~~~~~~~~~~'
-      END IF
-      IF ( lwp .AND. ln_inf ) THEN
-         WRITE(numout,*)'   Namelist naminf'
-         WRITE(numout,*)'      Module used       ln_inf        = ', ln_inf
-         WRITE(numout,*)'      Models available:'
-         WRITE(numout,*)'         Stanley et al. (2020)        = ', 'T by default for now'
-      ENDIF
+      WRITE(numout,*)
+      WRITE(numout,*)'inferences_init : Setting inferences models'
+      WRITE(numout,*)'~~~~~~~~~~~~~~~'
       !
       IF( ln_inf .AND. .NOT. lk_oasis )   CALL ctl_stop( 'inferences_init : External inferences coupled via OASIS, but key_oasis3 disabled' )
       !
@@ -141,41 +120,24 @@ CONTAINS
       ! ======================================== !
       !
       ! default definitions of ssnd snd srcv
-      srcv(ntypinf,:)%laction = .FALSE.  ;  srcv(ntypinf,:)%clgrid = 'T'  ;  srcv(ntypinf,:)%nsgn = 1.
+      srcv(ntypinf,:)%laction = .TRUE.  ;  srcv(ntypinf,:)%clgrid = 'T'  ;  srcv(ntypinf,:)%nsgn = 1.
       srcv(ntypinf,:)%nct = 1  ;  srcv(ntypinf,:)%nlvl = 1
       !
-      ssnd(ntypinf,:)%laction = .FALSE.  ;  ssnd(ntypinf,:)%clgrid = 'T'  ;  ssnd(ntypinf,:)%nsgn = 1.
+      ssnd(ntypinf,:)%laction = .TRUE.  ;  ssnd(ntypinf,:)%clgrid = 'T'  ;  ssnd(ntypinf,:)%nsgn = 1.
       ssnd(ntypinf,:)%nct = 1  ;  ssnd(ntypinf,:)%nlvl = 1
       
-      IF( ln_inf ) THEN
-      
-         ! -------------------------------- !
-         !      Kenigson et al. (2022)      !
-         ! -------------------------------- !
+      ! Step B: coupling properties
+      ! sending of field 1
+      ssnd(ntypinf,jps_1)%clname = 'E_OUT_0'
 
-         ! sending of sea surface temparature
-         ssnd(ntypinf,jps_st)%clname = 'E_OUT_0'
-         ssnd(ntypinf,jps_st)%laction = .TRUE.
+      ! sending of field 2
+      ssnd(ntypinf,jps_2)%clname = 'E_OUT_1'
 
-         ! sending of sea surface salinity
-         ssnd(ntypinf,jps_ss)%clname = 'E_OUT_1'
-         ssnd(ntypinf,jps_ss)%laction = .TRUE.
+      ! reception of field 1
+      srcv(ntypinf,jpr_1)%clname = 'E_IN_0'
 
-         ! sending of u-grid and v-grid masks
-         ssnd(ntypinf,jps_mu)%clname = 'E_OUT_2'
-         ssnd(ntypinf,jps_mu)%laction = .TRUE.
-
-         ssnd(ntypinf,jps_mv)%clname = 'E_OUT_3'
-         ssnd(ntypinf,jps_mv)%laction = .TRUE.
-
-         ! reception of sea surface density
-         srcv(ntypinf,jpr_rho)%clname = 'E_IN_0'
-         srcv(ntypinf,jpr_rho)%laction = .TRUE.
-
-         ! ------------------------------ !
-         ! ------------------------------ !
-
-      END IF
+      ! ------------------------------ !
+      ! ------------------------------ !
       ! 
       ! ================================= !
       !   Define variables for coupling
@@ -211,25 +173,12 @@ CONTAINS
       !
       ! ------  Prepare data to send ------
       !
-      ! Sea Surface Temperature
-      IF( ssnd(ntypinf,jps_st)%laction ) THEN
-         infsnd(jps_st)%z3(:,:,1:ssnd(ntypinf,jps_st)%nlvl) = ts(:,:,1:ssnd(ntypinf,jps_st)%nlvl,jp_tem,Kmm)
-      ENDIF  
-      !s
-      ! Sea Surface Salinity
-      IF( ssnd(ntypinf,jps_ss)%laction ) THEN
-         infsnd(jps_ss)%z3(:,:,1:ssnd(ntypinf,jps_ss)%nlvl) = ts(:,:,1:ssnd(ntypinf,jps_ss)%nlvl,jp_sal,Kmm)
-      ENDIF
+      ! Step C: fill sending array with values
+      ! Field 1e
+      infsnd(jps_1)%z3(:,:,1:ssnd(ntypinf,jps_1)%nlvl) = ts(:,:,1:ssnd(ntypinf,jps_1)%nlvl,jp_tem,Kmm)
       !
-      ! u-grid surface mask
-      IF( ssnd(ntypinf,jps_mu)%laction ) THEN
-          infsnd(jps_mu)%z3(:,:,1:ssnd(ntypinf,jps_mu)%nlvl) = umask(:,:,1:ssnd(ntypinf,jps_mu)%nlvl)
-      ENDIF
-      !
-      ! v-grid surface mask
-      IF( ssnd(ntypinf,jps_mv)%laction ) THEN
-          infsnd(jps_mv)%z3(:,:,1:ssnd(ntypinf,jps_mv)%nlvl) = vmask(:,:,1:ssnd(ntypinf,jps_mv)%nlvl)
-      ENDIF
+      ! Field 2
+      infsnd(jps_2)%z3(:,:,1:ssnd(ntypinf,jps_2)%nlvl) = ts(:,:,1:ssnd(ntypinf,jps_2)%nlvl,jp_sal,Kmm)
       !
       ! ========================
       !   Proceed all sendings
@@ -255,11 +204,9 @@ CONTAINS
       !
       ! ------ Distribute receptions  ------
       !
-      ! Sea Surface density
-      IF( srcv(ntypinf,jpr_rho)%laction ) THEN
-         tmp_inf_2D(:,:) = infrcv(jpr_rho)%z3(:,:,1)
-         CALL iom_put( 'St_rho_2D', tmp_inf_2D(:,:) )
-      ENDIF
+      ! Step D: get received field
+      ! Store field to receive 1
+      tmp_inf_2D(:,:) = infrcv(jpr_rho)%z3(:,:,1)
       !
       IF( ln_timing )   CALL timing_stop('inferences')
       !
