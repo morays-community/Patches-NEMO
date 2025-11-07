@@ -71,7 +71,7 @@ CONTAINS
       IF( lwp ) WRITE(numout,*) '      Reading Eophis namelist'
       !
       CALL build_eophis_list(mpi_comm_oce)
-      jpexch = count_eophis_list()
+      jpexch = count_eophis_var()
       !
       ! ==================================== !
       !     Define exchanges from Eophis     !
@@ -132,6 +132,7 @@ CONTAINS
       CHARACTER(len=*), INTENT(in)  :: varname
       REAL(wp), DIMENSION(jpi,jpj,jpk), INTENT(in) ::  to_send
       ! local variables
+      INTEGER :: jn, isec, info
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
@@ -147,7 +148,7 @@ CONTAINS
          CALL ctl_stop( 'send_to_python : function called for an incoming variable' )
       ELSE
          jn = curr_var%idx
-         (jn)%z3(:,:,1:ssnd(ntypinf,jn)%nlvl) = to_send(:,:,1:ssnd(ntypinf,jn)%nlvl)
+         fldsnd(jn)%z3(:,:,1:ssnd(ntypinf,jn)%nlvl) = to_send(:,:,1:ssnd(ntypinf,jn)%nlvl)
          CALL cpl_snd(jn, isec, ntypinf, fldsnd(jn)%z3, info)
       END IF
       !
@@ -168,8 +169,9 @@ CONTAINS
       ! I/O
       INTEGER, INTENT(in)           ::  kt             ! ocean time step
       CHARACTER(len=*), INTENT(in)  :: varname
-      REAL(wp), DIMENSION(jpi,jpj,jpk), INTENT(in) ::  to_send
+      REAL(wp), DIMENSION(jpi,jpj), INTENT(in) ::  to_send
       ! local variables
+      INTEGER :: jn, isec, info
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
@@ -185,7 +187,7 @@ CONTAINS
          CALL ctl_stop( 'send_to_python : function called for an incoming variable' )
       ELSE
          jn = curr_var%idx
-         fldsnd(jn)%z3(:,:,1:ssnd(ntypinf,jn)%nlvl) = to_send(:,:,1:ssnd(ntypinf,jn)%nlvl)
+         fldsnd(jn)%z3(:,:,ssnd(ntypinf,jn)%nlvl) = to_send(:,:)
          CALL cpl_snd(jn, isec, ntypinf, fldsnd(jn)%z3, info)
       END IF
       !
@@ -264,7 +266,7 @@ CONTAINS
       ELSE
          jn = curr_var%idx
          CALL cpl_rcv(jn, isec, ntypinf, fldrcv(jn)%z3, info)
-         to_rcv(:,:,srcv(ntypinf,jn)%nlvl) = fldrcv(jn)%z3(:,:,srcv(ntypinf,jn)%nlvl)
+         to_rcv(:,:) = fldrcv(jn)%z3(:,:,srcv(ntypinf,jn)%nlvl)
       END IF
       !
    END SUBROUTINE receive_from_python_2d
@@ -279,8 +281,8 @@ CONTAINS
       !! ** Method  :   * Deallocate arrays
       !!----------------------------------------------------------------------
       !
-      IF( inf_dealloc() /= 0 )     CALL ctl_stop( 'STOP', 'inf_dealloc : unable to free memory' )
-      IF( inffld_dealloc() /= 0 )  CALL ctl_stop( 'STOP', 'inffld_dealloc : unable to free memory' )
+      IF( pycpl_dealloc() /= 0 )     CALL ctl_stop( 'STOP', 'inf_dealloc : unable to free memory' )
+      IF( pyfld_dealloc() /= 0 )  CALL ctl_stop( 'STOP', 'inffld_dealloc : unable to free memory' )
       CALL purge_eophis()
       !
    END SUBROUTINE finalize_python_coupling
