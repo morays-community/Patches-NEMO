@@ -137,7 +137,7 @@ CONTAINS
       !!----------------------------------------------------------------------
       !
       ! Date of exchange
-      isec = ( kt - nit000 ) * NINT( rn_Dt )
+      isec = ( kt - nit000 ) * NINT( rdt )
       info = OASIS_idle
       !
       ! Get Eophis variable

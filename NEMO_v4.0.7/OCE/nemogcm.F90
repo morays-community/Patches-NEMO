@@ -92,6 +92,11 @@ MODULE nemogcm
    USE agrif_all_update   ! Master Agrif update
 #endif
 
+#if ! defined key_mpi_off
+   ! need MPI_Wtime
+   USE MPI
+#endif
+
    IMPLICIT NONE
    PRIVATE
 
@@ -100,11 +105,6 @@ MODULE nemogcm
    PUBLIC   nemo_alloc  ! needed by TAM
 
    CHARACTER(lc) ::   cform_aaa="( /, 'AAAAAAAA', / ) "     ! flag for output listing
-
-#if defined key_mpp_mpi
-   ! need MPI_Wtime
-   INCLUDE 'mpif.h'
-#endif
 
    !!----------------------------------------------------------------------
    !! NEMO/OCE 4.0 , NEMO Consortium (2018)
@@ -445,7 +445,7 @@ CONTAINS
                            CALL    tide_init    ! tidal harmonics
                            CALL     sbc_init    ! surface boundary conditions (including sea-ice)
                            CALL     bdy_init    ! Open boundaries initialisation
-                           CALL     inferences_init              ! Inferences from Machine Learning models
+                           CALL     init_python_coupling         ! Coupling from external Python models
       IF ( lk_oasis )      CALL     cpl_define                   ! couple external codes
 
       !                                      ! Ocean physics

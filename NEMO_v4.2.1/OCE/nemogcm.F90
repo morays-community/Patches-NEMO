@@ -75,6 +75,11 @@ MODULE nemogcm
    USE lib_fortran    ! Fortran utilities (allows no signed zero when 'key_nosignedzero' defined)
    USE halo_mng       ! halo manager
 
+#if ! defined key_mpi_off
+   ! need MPI_Wtime
+   USE MPI 
+#endif
+
    IMPLICIT NONE
    PRIVATE
 
@@ -83,11 +88,6 @@ MODULE nemogcm
    PUBLIC   nemo_alloc  ! needed by TAM
 
    CHARACTER(lc) ::   cform_aaa="( /, 'AAAAAAAA', / ) "     ! flag for output listing
-
-#if ! defined key_mpi_off
-   ! need MPI_Wtime
-   INCLUDE 'mpif.h'
-#endif
 
    !!----------------------------------------------------------------------
    !! NEMO/OCE 4.0 , NEMO Consortium (2018)

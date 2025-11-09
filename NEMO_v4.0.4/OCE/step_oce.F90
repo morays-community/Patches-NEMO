@@ -47,7 +47,7 @@ MODULE step_oce
    USE stopar          ! Stochastic parametrization       (sto_par routine)
    USE stopts 
 
-   USE infmod
+   USE pycpl
    USE cpl_oasis3 , ONLY : lk_oasis
 
    USE bdy_oce  , ONLY : ln_bdy
