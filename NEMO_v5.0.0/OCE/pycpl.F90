@@ -17,10 +17,10 @@ MODULE pycpl
    USE pyfld           ! working fields for python models
    USE cpl_oasis3      ! OASIS3 coupling
    USE eophis_def      ! Eophis inputs
-   USE timing
+   USE lib_mpp
    USE iom
    USE in_out_manager
-   USE lib_mpp
+   USE timing
 
    IMPLICIT NONE
    PUBLIC
@@ -37,6 +37,7 @@ MODULE pycpl
       MODULE PROCEDURE receive_from_python_3d, receive_from_python_2d
    END INTERFACE receive_from_python
 
+#  include "do_loop_substitute.h90"
 
 CONTAINS
 
@@ -110,7 +111,7 @@ CONTAINS
       ! ===================== !
       !    Configure OASIS    !
       ! ===================== !
-      CALL cpl_var(jpexch, jpexch, 1, ntypinf)
+      CALL cpl_var(jpexch, jpexch, 1, nmodext)
       !
       IF( pycpl_alloc() /= 0 )     CALL ctl_stop( 'STOP', 'pycpl_alloc : unable to allocate arrays' )
       IF( pyfld_alloc() /= 0 )     CALL ctl_stop( 'STOP', 'pyfld_alloc : unable to allocate arrays' )
@@ -151,7 +152,7 @@ CONTAINS
       ELSE
          jn = curr_var%idx
          fldsnd(jn)%z3(:,:,1:ssnd(nmodext)%fld(jn)%nlvl) = to_send(:,:,1:ssnd(nmodext)%fld(jn)%nlvl)
-         CALL cpl_snd(jn, isec, ntypinf, fldsnd(jn)%z3, info)
+         CALL cpl_snd(nmodext, jn, isec, fldsnd(jn)%z3(A2D(0),:), info)
       END IF
       !
    END SUBROUTINE send_to_python_3d
@@ -190,7 +191,7 @@ CONTAINS
       ELSE
          jn = curr_var%idx
          fldsnd(jn)%z3(:,:,ssnd(nmodext)%fld(jn)%nlvl) = to_send(:,:)
-         CALL cpl_snd(jn, isec, ntypinf, fldsnd(jn)%z3, info)
+         CALL cpl_snd(nmodext, jn, isec, fldsnd(jn)%z3(A2D(0),:), info)
       END IF
       !
    END SUBROUTINE send_to_python_2d
@@ -228,7 +229,7 @@ CONTAINS
          CALL ctl_stop( 'receive_from_python : function called for an outcoming variable')
       ELSE
          jn = curr_var%idx
-         CALL cpl_rcv(jn, isec, ntypinf, fldrcv(jn)%z3, info)
+         CALL cpl_rcv(nmodext, jn, isec, fldrcv(jn)%z3(A2D(0),:), info)
          to_rcv(:,:,1:srcv(nmodext)%fld(jn)%nlvl) = fldrcv(jn)%z3(:,:,1:srcv(nmodext)%fld(jn)%nlvl)
       END IF
       !
@@ -267,7 +268,7 @@ CONTAINS
          CALL ctl_stop( 'receive_from_python : function called for an outcoming variable')
       ELSE
          jn = curr_var%idx
-         CALL cpl_rcv(jn, isec, ntypinf, fldrcv(jn)%z3, info)
+         CALL cpl_rcv(nmodext, jn, isec, fldrcv(jn)%z3(A2D(0),:), info)
          to_rcv(:,:) = fldrcv(jn)%z3(:,:,srcv(nmodext)%fld(jn)%nlvl)
       END IF
       !
