@@ -1,14 +1,14 @@
-MODULE extfld
+MODULE pyfld
    !!======================================================================
-   !!                       ***  MODULE extfld  ***
-   !! Inferences module :   variables defined in core memory
+   !!                       ***  MODULE pyfld  ***
+   !! Python module :   variables defined in core memory
    !!======================================================================
-   !! History :  4.2  ! 2023-09  (A. Barge)  Original code
+   !! History :  4.2  ! 2025-11  (A. Barge)  Original code
    !!----------------------------------------------------------------------
 
    !!----------------------------------------------------------------------
-   !!   extfld_alloc : allocation of fields arrays for inferences module (infmod)
-   !!----------------------------------------------------------------------        
+   !!   pyfld_alloc : allocation of fields arrays for Python coupling module (pycpl)
+   !!----------------------------------------------------------------------
    !!=====================================================
    USE par_oce        ! ocean parameters
    USE lib_mpp        ! MPP library
@@ -16,46 +16,46 @@ MODULE extfld
    IMPLICIT NONE
    PRIVATE
 
-   PUBLIC   extfld_alloc   ! routine called in infmod.F90
-   PUBLIC   extfld_dealloc ! routine called in infmod.F90
+   PUBLIC   pyfld_alloc   ! routine called in pycpl.F90
+   PUBLIC   pyfld_dealloc ! routine called in pycpl.F90
 
    !!----------------------------------------------------------------------
-   !!                    2D Inference Module fields
+   !!                    2D Python coupling Module fields
    !!----------------------------------------------------------------------
-   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:)  :: ext_ts_2D    !: dummy field to store 2D inferences
+   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:)  :: tmp_fld_2D    !: dummy field to store 2D fields
 
    !!----------------------------------------------------------------------
-   !!                    3D Inference Module fields
+   !!                    3D Python coupling Module fields
    !!----------------------------------------------------------------------
-   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:,:)  :: ext_u_3D  !: dummy field to store 3D inferences
+   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:,:)  :: tmp_fld_3D  !: dummy field to store 3D fields
 
 CONTAINS
 
-   INTEGER FUNCTION extfld_alloc()
+   INTEGER FUNCTION pyfld_alloc()
       !!---------------------------------------------------------------------
-      !!                  ***  FUNCTION extfld_alloc  ***
+      !!                  ***  FUNCTION pyfld_alloc  ***
       !!---------------------------------------------------------------------
       INTEGER :: ierr
       !!---------------------------------------------------------------------
       ierr = 0
       !
-      ALLOCATE( ext_ts_2D(jpi,jpj) , ext_u_3D(jpi,jpj,jpk)  , STAT=ierr )
-      extfld_alloc = ierr
+      ALLOCATE( tmp_fld_2D(jpi,jpj) , tmp_fld_3D(jpi,jpj,jpk)  , STAT=ierr )
+      pyfld_alloc = ierr
       !
    END FUNCTION
 
    
-   INTEGER FUNCTION extfld_dealloc()
+   INTEGER FUNCTION pyfld_dealloc()
       !!---------------------------------------------------------------------
-      !!                  ***  FUNCTION extfld_dealloc  ***
+      !!                  ***  FUNCTION pyfld_dealloc  ***
       !!---------------------------------------------------------------------
       INTEGER :: ierr
       !!---------------------------------------------------------------------
       ierr = 0
       !
-      DEALLOCATE( ext_ts_2D , ext_u_3D  , STAT=ierr )
-      extfld_dealloc = ierr
+      DEALLOCATE( tmp_fld_2D , tmp_fld_3D  , STAT=ierr )
+      pyfld_dealloc = ierr
       !
    END FUNCTION
 
-END MODULE extfld
+END MODULE pyfld
