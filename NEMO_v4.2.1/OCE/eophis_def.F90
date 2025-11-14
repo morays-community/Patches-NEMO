@@ -36,8 +36,8 @@ MODULE eophis_def
 
    ! First eophis variable - can only be modified through Module API
    TYPE(eophis_var), POINTER, PRIVATE :: eophis_list => NULL()
+   
 
-    
 CONTAINS
 
    SUBROUTINE build_eophis_list(model_comm)

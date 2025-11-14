@@ -12,13 +12,10 @@ MODULE pycpl
    !!   receive_from_python      : receive fields from external Python model
    !!   finalize_python_coupling : Free memory
    !!----------------------------------------------------------------------
-   USE oce             ! ocean fields
-   USE dom_oce         ! ocean domain fields
-   USE pyfld           ! working fields for python models
-   USE cpl_oasis3      ! OASIS3 coupling
-   USE eophis_def      ! Eophis inputs
+   USE cpl_oasis3      
+   USE eophis_def     
+   USE dom_oce    
    USE lib_mpp
-   USE iom
    USE in_out_manager
    USE timing
 
@@ -114,7 +111,6 @@ CONTAINS
       CALL cpl_var(jpexch, jpexch, 1, nmodext)
       !
       IF( pycpl_alloc() /= 0 )     CALL ctl_stop( 'STOP', 'pycpl_alloc : unable to allocate arrays' )
-      IF( pyfld_alloc() /= 0 )     CALL ctl_stop( 'STOP', 'pyfld_alloc : unable to allocate arrays' )
       !
    END SUBROUTINE init_python_coupling
 
@@ -285,7 +281,6 @@ CONTAINS
       !!----------------------------------------------------------------------
       !
       IF( pycpl_dealloc() /= 0 )     CALL ctl_stop( 'STOP', 'inf_dealloc : unable to free memory' )
-      IF( pyfld_dealloc() /= 0 )  CALL ctl_stop( 'STOP', 'inffld_dealloc : unable to free memory' )
       CALL purge_eophis()
       !
    END SUBROUTINE finalize_python_coupling

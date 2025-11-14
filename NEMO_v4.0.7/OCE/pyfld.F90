@@ -10,52 +10,63 @@ MODULE pyfld
    !!   pyfld_alloc : allocation of fields arrays for Python coupling module (pycpl)
    !!----------------------------------------------------------------------
    !!=====================================================
+   USE oce            ! ocean fields
+   USE dom_oce        ! ocean metrics fields
    USE par_oce        ! ocean parameters
    USE lib_mpp        ! MPP library
+   USE pycpl          ! Python coupling module
+   USE iom
 
    IMPLICIT NONE
-   PRIVATE
-
-   PUBLIC   pyfld_alloc   ! routine called in pycpl.F90
-   PUBLIC   pyfld_dealloc ! routine called in pycpl.F90
+   PUBLIC
 
    !!----------------------------------------------------------------------
    !!                    2D Python coupling Module fields
    !!----------------------------------------------------------------------
-   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:)  :: tmp_fld_2D    !: dummy field to store 2D fields
+   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:)  :: fld_2D    !: dummy field to store 2D fields
 
    !!----------------------------------------------------------------------
    !!                    3D Python coupling Module fields
    !!----------------------------------------------------------------------
-   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:,:)  :: tmp_fld_3D  !: dummy field to store 3D fields
+   REAL(wp), PUBLIC, ALLOCATABLE, SAVE, DIMENSION(:,:,:)  :: fld_3D  !: dummy field to store 3D fields
 
 CONTAINS
 
-   INTEGER FUNCTION pyfld_alloc()
-      !!---------------------------------------------------------------------
-      !!                  ***  FUNCTION pyfld_alloc  ***
-      !!---------------------------------------------------------------------
-      INTEGER :: ierr
-      !!---------------------------------------------------------------------
-      ierr = 0
+   SUBROUTINE init_python_fields()
+      !!----------------------------------------------------------------------
+      !!             ***  ROUTINE init_python_fields  ***
+      !!
+      !! ** Purpose :   Initialisation of the Python module
+      !!
+      !! ** Method  :   * Allocate arrays for Python fields
+      !!                * Configure Python coupling
+      !!----------------------------------------------------------------------
       !
-      ALLOCATE( tmp_fld_2D(jpi,jpj) , tmp_fld_3D(jpi,jpj,jpk)  , STAT=ierr )
-      pyfld_alloc = ierr
+      ! Allocate fields
+      ALLOCATE( fld_2D(jpi,jpj) , fld_3D(jpi,jpj,jpk) )
       !
-   END FUNCTION
+      ! configure coupling
+      CALL init_python_coupling()
+      !
+   END SUBROUTINE init_python_fields
 
-   
-   INTEGER FUNCTION pyfld_dealloc()
-      !!---------------------------------------------------------------------
-      !!                  ***  FUNCTION pyfld_dealloc  ***
-      !!---------------------------------------------------------------------
-      INTEGER :: ierr
-      !!---------------------------------------------------------------------
-      ierr = 0
+
+   SUBROUTINE finalize_python_fields()
+      !!----------------------------------------------------------------------
+      !!             ***  ROUTINE finalize_python_fields  ***
+      !!
+      !! ** Purpose :   Free memory used by Python module
+      !!
+      !! ** Method  :   * deallocate arrays for Python fields
+      !!                * deallocate Python coupling
+      !!----------------------------------------------------------------------
       !
-      DEALLOCATE( tmp_fld_2D , tmp_fld_3D  , STAT=ierr )
-      pyfld_dealloc = ierr
+      ! Free memory
+      DEALLOCATE( fld_2D, fld_3D )
       !
-   END FUNCTION
+      ! terminate coupling environment
+      CALL finalize_python_coupling()
+      !
+   END SUBROUTINE finalize_python_fields
 
 END MODULE pyfld

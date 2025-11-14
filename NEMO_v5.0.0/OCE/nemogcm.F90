@@ -447,7 +447,7 @@ CONTAINS
                            CALL    tide_init                     ! tidal harmonics
                            CALL    sbc_init( Nbb, Nnn, Naa )     ! surface boundary conditions (including sea-ice)
                            CALL    bdy_init                      ! Open boundaries initialisation
-                           CALL    init_python_coupling          ! Coupling from external Python models
+                           CALL    init_python_fields            ! Coupling from external Python models
       IF( lk_oasis     )   CALL    cpl_define                    ! terminate coupling initialization
 
       !                                      ! Ocean physics
