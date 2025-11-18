@@ -124,6 +124,7 @@ CONTAINS
       REAL(wp), DIMENSION(:,:,:), INTENT(in) ::  to_send
       ! local variables
       INTEGER :: isec, info
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
@@ -137,11 +138,17 @@ CONTAINS
          CALL ctl_stop( 'send_to_python : unrecognized variable name '//TRIM(varname) )
       END IF
       !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      !
       ! OASIS layer
       IF (curr_var%in) THEN
          CALL ctl_stop( 'send_to_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         CALL cpl_snd(curr_var%idx, isec, ntypinf, to_send(A2D(0),1:ssnd(ntypinf,curr_var%idx)%nlvl), info)
+         CALL cpl_snd(curr_var%idx, isec, ntypinf, to_send(is:ie,js:je,1:ssnd(ntypinf,curr_var%idx)%nlvl), info)
       END IF
       !
    END SUBROUTINE send_to_python_3d
@@ -164,6 +171,7 @@ CONTAINS
       REAL(wp), DIMENSION(:,:), INTENT(in) ::  to_send
       ! local variables
       INTEGER :: isec, info
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       REAL(wp), DIMENSION(A2D(0),1) :: zbuf
       !!----------------------------------------------------------------------
@@ -178,11 +186,17 @@ CONTAINS
          CALL ctl_stop( 'send_to_python : unrecognized variable name '//TRIM(varname) )
       END IF
       !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      !
       ! OASIS layer
       IF (curr_var%in) THEN
          CALL ctl_stop( 'send_to_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         zbuf(A2D(0),1) = to_send(A2D(0))
+         zbuf(is:ie,js:je,1) = to_send(is:ie,js:je)
          CALL cpl_snd(curr_var%idx, isec, ntypinf, zbuf, info)
       END IF
       !
@@ -206,6 +220,7 @@ CONTAINS
       REAL(wp), DIMENSION(:,:,:), INTENT(inout) ::  to_rcv
       ! local variables
       INTEGER :: info, isec
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
@@ -219,11 +234,17 @@ CONTAINS
          CALL ctl_stop( 'receive_from_python : unrecognized variable name '//TRIM(varname) )
       END IF
       !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      !
       ! OASIS layer
       IF (.NOT. curr_var%in) THEN
          CALL ctl_stop( 'receive_from_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         CALL cpl_rcv(curr_var%idx, isec, ntypinf, to_rcv(A2D(0),1:srcv(ntypinf,curr_var%idx)%nlvl), info)
+         CALL cpl_rcv(curr_var%idx, isec, ntypinf, to_rcv(is:ie,js:je,1:srcv(ntypinf,curr_var%idx)%nlvl), info)
       END IF
       !
    END SUBROUTINE receive_from_python_3d
@@ -246,6 +267,7 @@ CONTAINS
       REAL(wp), DIMENSION(:,:), INTENT(inout) ::  to_rcv
       ! local variables
       INTEGER :: info, isec
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       REAL(wp), DIMENSION(A2D(0),1) :: zbuf
       !!----------------------------------------------------------------------
@@ -260,14 +282,20 @@ CONTAINS
          CALL ctl_stop( 'receive_from_python : unrecognized variable name '//TRIM(varname) )
       END IF
       !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      !
       ! OASIS layer
       IF (.NOT. curr_var%in) THEN
          CALL ctl_stop( 'receive_from_python : function called for incoming variable '//TRIM(varname) )
       ELSE
          ! Save value if nothing is done
-         zbuf(A2D(0),1) = to_rcv(A2D(0))
+         zbuf(is:ie,js:je,1) = to_rcv(is:ie,js:je)
          CALL cpl_rcv(curr_var%idx, isec, ntypinf, zbuf, info)
-         to_rcv(A2D(0)) = zbuf(A2D(0),1)
+         to_rcv(is:ie,js:je) = zbuf(is:ie,js:je,1)
       END IF
       !
    END SUBROUTINE receive_from_python_2d

@@ -15,6 +15,7 @@ MODULE pycpl
    USE cpl_oasis3      
    USE eophis_def
    USE dom_oce
+   USE par_oce
    USE lib_mpp
    USE in_out_manager
    USE timing
@@ -127,12 +128,19 @@ CONTAINS
       REAL(wp), DIMENSION(:,:,:), INTENT(in) ::  to_send
       ! local variables
       INTEGER :: isec, info
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
       ! Date of exchange
       isec = ( kt - nit000 ) * NINT( rn_Dt )
       info = OASIS_idle
+      !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
@@ -144,7 +152,7 @@ CONTAINS
       IF (curr_var%in) THEN
          CALL ctl_stop( 'send_to_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         CALL cpl_snd(nmodext, curr_var%idx, isec, to_send(A2D(0),1:ssnd(nmodext)%fld(curr_var%idx)%nlvl), info)
+         CALL cpl_snd(nmodext, curr_var%idx, isec, to_send(is:ie,js:je,1:ssnd(nmodext)%fld(curr_var%idx)%nlvl), info)
       END IF
       !
    END SUBROUTINE send_to_python_3d
@@ -166,7 +174,8 @@ CONTAINS
       CHARACTER(len=*), INTENT(in)  :: varname
       REAL(wp), DIMENSION(:,:), INTENT(in) ::  to_send
       ! local variables
-      INTEGER :: isec, info
+      INTEGER :: isec, info, 
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       REAL(wp), DIMENSION(A2D(0),1) :: zbuf
       !!----------------------------------------------------------------------
@@ -174,6 +183,12 @@ CONTAINS
       ! Date of exchange
       isec = ( kt - nit000 ) * NINT( rn_Dt )
       info = OASIS_idle
+      !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
@@ -185,7 +200,7 @@ CONTAINS
       IF (curr_var%in) THEN
          CALL ctl_stop( 'send_to_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         zbuf(A2D(0),1) = to_send(A2D(0))
+         zbuf(A2D(0),1) = to_send(is:ie,js:je)
          CALL cpl_snd(nmodext, curr_var%idx, isec, zbuf, info)
       END IF
       !
@@ -209,12 +224,19 @@ CONTAINS
       REAL(wp), DIMENSION(:,:,:), INTENT(inout) ::  to_rcv
       ! local variables
       INTEGER :: info, isec
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
       ! Date of exchange
       isec = ( kt - nit000 ) * NINT( rn_Dt )
       info = OASIS_idle
+      !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
@@ -226,7 +248,7 @@ CONTAINS
       IF (.NOT. curr_var%in) THEN
          CALL ctl_stop( 'receive_from_python : function called for outcoming variable '//TRIM(varname) )
       ELSE
-         CALL cpl_rcv(nmodext, curr_var%idx, isec, to_rcv(A2D(0),1:srcv(nmodext)%fld(curr_var%idx)%nlvl), info)
+         CALL cpl_rcv(nmodext, curr_var%idx, isec, to_rcv(is:ie,js:je,1:srcv(nmodext)%fld(curr_var%idx)%nlvl), info)
       END IF
       !
    END SUBROUTINE receive_from_python_3d
@@ -249,6 +271,7 @@ CONTAINS
       REAL(wp), DIMENSION(:,:), INTENT(inout) ::  to_rcv
       ! local variables
       INTEGER :: info, isec
+      INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       REAL(wp), DIMENSION(A2D(0),1) :: zbuf
       !!----------------------------------------------------------------------
@@ -263,14 +286,20 @@ CONTAINS
          CALL ctl_stop( 'receive_from_python : unrecognized variable name '//TRIM(varname) )
       END IF
       !
+      ! Array bounds
+      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
+      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      !
       ! OASIS layer
       IF (.NOT. curr_var%in) THEN
          CALL ctl_stop( 'receive_from_python : function called for outcoming variable '//TRIM(varname) )
       ELSE
          ! save value if nothing is done
-         zbuf(A2D(0),1) = to_rcv(A2D(0))
+         zbuf(A2D(0),1) = to_rcv(is:is,js:je)
          CALL cpl_rcv(nmodext, curr_var%idx, isec, zbuf, info)
-         to_rcv(A2D(0)) = zbuf(A2D(0),1)
+         to_rcv(is:ie,js:je) = zbuf(A2D(0),1)
       END IF
       !
    END SUBROUTINE receive_from_python_2d
@@ -285,7 +314,7 @@ CONTAINS
       !! ** Method  :   * Deallocate arrays
       !!----------------------------------------------------------------------
       !
-      DEALLOCATE(fldrcv, fldsnd, srcv(nmodext)%fld , ssnd(nmodext)%fld )
+      DEALLOCATE( srcv(nmodext)%fld , ssnd(nmodext)%fld )
       CALL purge_eophis()
       !
    END SUBROUTINE finalize_python_coupling
