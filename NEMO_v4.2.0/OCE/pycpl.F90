@@ -22,10 +22,6 @@ MODULE pycpl
    IMPLICIT NONE
    PUBLIC
 
-   INTEGER, SAVE, PRIVATE ::   jpexch        ! Maximum number of exchanges
-
-   TYPE( DYNARR ), PRIVATE, SAVE, ALLOCATABLE ::  fldsnd(:), fldrcv(:)  ! sent/received fields
-
    INTERFACE send_to_python
       MODULE PROCEDURE send_to_python_3d, send_to_python_2d
    END INTERFACE send_to_python
@@ -49,7 +45,8 @@ CONTAINS
       !!----------------------------------------------------------------------
       ! I/O
       ! local variables
-      INTEGER ::   ios, jsnd = 1, jrcv = 1  ! Local Integer
+      INTEGER :: ios, jpexch
+      INTEGER :: jsnd = 1, jrcv = 1
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
@@ -107,8 +104,6 @@ CONTAINS
       ! ===================== !
       CALL cpl_var(jpexch, jpexch, 1, ntypinf)
       !
-      IF( pycpl_alloc() /= 0 )     CALL ctl_stop( 'STOP', 'pycpl_alloc : unable to allocate arrays' )
-      !
    END SUBROUTINE init_python_coupling
 
 
@@ -126,9 +121,9 @@ CONTAINS
       ! I/O
       INTEGER, INTENT(in)           ::  kt             ! ocean time step
       CHARACTER(len=*), INTENT(in)  :: varname
-      REAL(wp), DIMENSION(jpi,jpj,jpk), INTENT(in) ::  to_send
+      REAL(wp), DIMENSION(:,:,:), INTENT(in) ::  to_send
       ! local variables
-      INTEGER :: jn, isec, info
+      INTEGER :: isec, info
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
@@ -138,14 +133,15 @@ CONTAINS
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
+      IF (.NOT.associated(curr_var)) THEN
+         CALL ctl_stop( 'send_to_python : unrecognized variable name '//TRIM(varname) )
+      END IF
       !
       ! OASIS layer
       IF (curr_var%in) THEN
-         CALL ctl_stop( 'send_to_python : function called for an incoming variable' )
+         CALL ctl_stop( 'send_to_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         jn = curr_var%idx
-         fldsnd(jn)%z3(:,:,1:ssnd(ntypinf,jn)%nlvl) = to_send(:,:,1:ssnd(ntypinf,jn)%nlvl)
-         CALL cpl_snd(jn, isec, ntypinf, fldsnd(jn)%z3, info)
+         CALL cpl_snd(curr_var%idx, isec, ntypinf, to_send(A2D(0),1:ssnd(ntypinf,curr_var%idx)%nlvl), info)
       END IF
       !
    END SUBROUTINE send_to_python_3d
@@ -165,10 +161,11 @@ CONTAINS
       ! I/O
       INTEGER, INTENT(in)           ::  kt             ! ocean time step
       CHARACTER(len=*), INTENT(in)  :: varname
-      REAL(wp), DIMENSION(jpi,jpj), INTENT(in) ::  to_send
+      REAL(wp), DIMENSION(:,:), INTENT(in) ::  to_send
       ! local variables
-      INTEGER :: jn, isec, info
+      INTEGER :: isec, info
       TYPE(eophis_var), POINTER :: curr_var
+      REAL(wp), DIMENSION(A2D(0),1) :: zbuf
       !!----------------------------------------------------------------------
       !
       ! Date of exchange
@@ -177,14 +174,16 @@ CONTAINS
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
+      IF (.NOT.associated(curr_var)) THEN
+         CALL ctl_stop( 'send_to_python : unrecognized variable name '//TRIM(varname) )
+      END IF
       !
       ! OASIS layer
       IF (curr_var%in) THEN
-         CALL ctl_stop( 'send_to_python : function called for an incoming variable' )
+         CALL ctl_stop( 'send_to_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         jn = curr_var%idx
-         fldsnd(jn)%z3(:,:,ssnd(ntypinf,jn)%nlvl) = to_send(:,:)
-         CALL cpl_snd(jn, isec, ntypinf, fldsnd(jn)%z3, info)
+         zbuf(A2D(0),1) = to_send(A2D(0))
+         CALL cpl_snd(curr_var%idx, isec, ntypinf, zbuf, info)
       END IF
       !
    END SUBROUTINE send_to_python_2d
@@ -204,9 +203,9 @@ CONTAINS
       ! I/O
       INTEGER, INTENT(in)           ::  kt
       CHARACTER(len=*), INTENT(in)  :: varname
-      REAL(wp), DIMENSION(jpi,jpj,jpk), INTENT(out) ::  to_rcv
+      REAL(wp), DIMENSION(:,:,:), INTENT(inout) ::  to_rcv
       ! local variables
-      INTEGER :: jn, info, isec
+      INTEGER :: info, isec
       TYPE(eophis_var), POINTER :: curr_var
       !!----------------------------------------------------------------------
       !
@@ -216,14 +215,15 @@ CONTAINS
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
+      IF (.NOT.associated(curr_var)) THEN
+         CALL ctl_stop( 'receive_from_python : unrecognized variable name '//TRIM(varname) )
+      END IF
       !
       ! OASIS layer
       IF (.NOT. curr_var%in) THEN
-         CALL ctl_stop( 'receive_from_python : function called for an outcoming variable')
+         CALL ctl_stop( 'receive_from_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         jn = curr_var%idx
-         CALL cpl_rcv(jn, isec, ntypinf, fldrcv(jn)%z3, info)
-         to_rcv(:,:,1:srcv(ntypinf,jn)%nlvl) = fldrcv(jn)%z3(:,:,1:srcv(ntypinf,jn)%nlvl)
+         CALL cpl_rcv(curr_var%idx, isec, ntypinf, to_rcv(A2D(0),1:srcv(ntypinf,curr_var%idx)%nlvl), info)
       END IF
       !
    END SUBROUTINE receive_from_python_3d
@@ -243,10 +243,11 @@ CONTAINS
       ! I/O
       INTEGER, INTENT(in)           ::  kt
       CHARACTER(len=*), INTENT(in)  :: varname
-      REAL(wp), DIMENSION(jpi,jpj), INTENT(out) ::  to_rcv
+      REAL(wp), DIMENSION(:,:), INTENT(inout) ::  to_rcv
       ! local variables
-      INTEGER :: jn, info, isec
+      INTEGER :: info, isec
       TYPE(eophis_var), POINTER :: curr_var
+      REAL(wp), DIMENSION(A2D(0),1) :: zbuf
       !!----------------------------------------------------------------------
       !
       ! Date of exchange
@@ -255,14 +256,18 @@ CONTAINS
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
+      IF (.NOT.associated(curr_var)) THEN
+         CALL ctl_stop( 'receive_from_python : unrecognized variable name '//TRIM(varname) )
+      END IF
       !
       ! OASIS layer
       IF (.NOT. curr_var%in) THEN
-         CALL ctl_stop( 'receive_from_python : function called for an outcoming variable')
+         CALL ctl_stop( 'receive_from_python : function called for incoming variable '//TRIM(varname) )
       ELSE
-         jn = curr_var%idx
-         CALL cpl_rcv(jn, isec, ntypinf, fldrcv(jn)%z3, info)
-         to_rcv(:,:) = fldrcv(jn)%z3(:,:,srcv(ntypinf,jn)%nlvl)
+         ! Save value if nothing is done
+         zbuf(A2D(0),1) = to_rcv(A2D(0))
+         CALL cpl_rcv(curr_var%idx, isec, ntypinf, zbuf, info)
+         to_rcv(A2D(0)) = zbuf(A2D(0),1)
       END IF
       !
    END SUBROUTINE receive_from_python_2d
@@ -277,49 +282,8 @@ CONTAINS
       !! ** Method  :   * Deallocate arrays
       !!----------------------------------------------------------------------
       !
-      IF( pycpl_dealloc() /= 0 )     CALL ctl_stop( 'STOP', 'inf_dealloc : unable to free memory' )
       CALL purge_eophis()
       !
    END SUBROUTINE finalize_python_coupling
-
-
-   INTEGER FUNCTION pycpl_alloc()
-      !!----------------------------------------------------------------------
-      !!             ***  FUNCTION pycpl_alloc  ***
-      !!----------------------------------------------------------------------
-      INTEGER :: ierr
-      INTEGER :: jn
-      !!----------------------------------------------------------------------
-      ierr = 0
-      !
-      ALLOCATE(fldsnd(jpexch),fldrcv(jpexch), STAT=ierr)
-      !
-      DO jn = 1, jpexch
-         IF( srcv(ntypinf,jn)%laction ) ALLOCATE( fldrcv(jn)%z3(jpi,jpj,srcv(ntypinf,jn)%nlvl), STAT=ierr )
-         IF( ssnd(ntypinf,jn)%laction ) ALLOCATE( fldsnd(jn)%z3(jpi,jpj,ssnd(ntypinf,jn)%nlvl), STAT=ierr )
-         pycpl_alloc = MAX(ierr,0)
-      END DO
-      !
-   END FUNCTION pycpl_alloc
-
-
-   INTEGER FUNCTION pycpl_dealloc()
-      !!----------------------------------------------------------------------
-      !!             ***  FUNCTION pycpl_dealloc  ***
-      !!----------------------------------------------------------------------
-      INTEGER :: ierr
-      INTEGER :: jn
-      !!----------------------------------------------------------------------
-      ierr = 0
-      !
-      DO jn = 1, jpexch
-         IF( srcv(ntypinf,jn)%laction ) DEALLOCATE( fldrcv(jn)%z3, STAT=ierr )
-         IF( ssnd(ntypinf,jn)%laction ) DEALLOCATE( fldsnd(jn)%z3, STAT=ierr )
-         pycpl_dealloc = MAX(ierr,0)
-      END DO
-      !
-      DEALLOCATE(fldrcv,fldsnd)
-      !
-   END FUNCTION pycpl_dealloc
 
 END MODULE pycpl
