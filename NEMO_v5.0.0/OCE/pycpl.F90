@@ -137,10 +137,10 @@ CONTAINS
       info = OASIS_idle
       !
       ! Array bounds
-      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
-      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      is = 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 
+      js = 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 
+      ie = jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 
+      je = jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
@@ -174,7 +174,7 @@ CONTAINS
       CHARACTER(len=*), INTENT(in)  :: varname
       REAL(wp), DIMENSION(:,:), INTENT(in) ::  to_send
       ! local variables
-      INTEGER :: isec, info, 
+      INTEGER :: isec, info 
       INTEGER :: is, ie, js, je
       TYPE(eophis_var), POINTER :: curr_var
       REAL(wp), DIMENSION(A2D(0),1) :: zbuf
@@ -185,10 +185,10 @@ CONTAINS
       info = OASIS_idle
       !
       ! Array bounds
-      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
-      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      is = 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 
+      js = 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 
+      ie = jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 
+      je = jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
@@ -233,10 +233,10 @@ CONTAINS
       info = OASIS_idle
       !
       ! Array bounds
-      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
-      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      is = 1 + nn_hls - (jpi - SIZE(to_rcv,1)) / 2 
+      js = 1 + nn_hls - (jpj - SIZE(to_rcv,2)) / 2 
+      ie = jpi - nn_hls - (jpi - SIZE(to_rcv,1)) / 2 
+      je = jpj - nn_hls - (jpj - SIZE(to_rcv,2)) / 2 
       !
       ! Get Eophis variable
       CALL find_eophis_var(varname,curr_var)
@@ -287,17 +287,17 @@ CONTAINS
       END IF
       !
       ! Array bounds
-      is = NINT( 1 + nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      js = NINT( 1 + nn_hls - (jpj - SIZE(to_send,2)) / 2 )
-      ie = NINT( jpi - nn_hls - (jpi - SIZE(to_send,1)) / 2 )
-      je = NINT( jpj - nn_hls - (jpj - SIZE(to_send,2)) / 2 )
+      is = 1 + nn_hls - (jpi - SIZE(to_rcv,1)) / 2 
+      js = 1 + nn_hls - (jpj - SIZE(to_rcv,2)) / 2 
+      ie = jpi - nn_hls - (jpi - SIZE(to_rcv,1)) / 2 
+      je = jpj - nn_hls - (jpj - SIZE(to_rcv,2)) / 2 
       !
       ! OASIS layer
       IF (.NOT. curr_var%in) THEN
          CALL ctl_stop( 'receive_from_python : function called for outcoming variable '//TRIM(varname) )
       ELSE
          ! save value if nothing is done
-         zbuf(A2D(0),1) = to_rcv(is:is,js:je)
+         zbuf(A2D(0),1) = to_rcv(is:ie,js:je)
          CALL cpl_rcv(nmodext, curr_var%idx, isec, zbuf, info)
          to_rcv(is:ie,js:je) = zbuf(A2D(0),1)
       END IF
