@@ -21,7 +21,7 @@ MODULE step_oce
    USE sbcwave         ! Wave intialisation
    USE tide_mod        ! tides
 
-   USE infmod
+   USE pyfld
    USE cpl_oasis3 , ONLY : lk_oasis
 
    USE bdy_oce   ,  ONLY : ln_bdy

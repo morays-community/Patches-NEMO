@@ -22,7 +22,7 @@ MODULE step_oce
    USE tide_mod        ! tides
 
    USE cpl_oasis3 , ONLY : lk_oasis
-   USE extcom
+   USE pyfld
 
    USE bdy_oce  , ONLY : ln_bdy
    USE bdydta          ! open boundary condition data     (bdy_dta routine)
